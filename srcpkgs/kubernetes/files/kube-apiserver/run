@@ -1,4 +1,5 @@
 #!/bin/sh
+! [ -e /var/run/kubernetes ] && mkdir /var/run/kubernetes && chown kube:kube /var/run/kubernetes
 [ -r /etc/kubernetes/config ] && . /etc/kubernetes/config
 [ -r /etc/kubernetes/apiserver ] && . /etc/kubernetes/apiserver
 exec chpst -u kube:kube kube-apiserver \
@@ -11,4 +12,4 @@ exec chpst -u kube:kube kube-apiserver \
 	$KUBE_ALLOW_PRIV \
 	$KUBE_SERVICE_ADDRESSES \
 	$KUBE_ADMISSION_CONTROL \
-	$KUBE_API_ARGS 2>/dev/null
+	$KUBE_API_ARGS 2>&1

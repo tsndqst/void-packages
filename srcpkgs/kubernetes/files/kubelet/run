@@ -1,4 +1,4 @@
 #!/bin/sh
 [ -r /etc/kubernetes/config ] && . /etc/kubernetes/config
 [ -r /etc/kubernetes/kubelet ] && . /etc/kubernetes/kubelet
-exec kubelet $OPTS 2>/dev/null
+exec kubelet $KUBELET_ARGS 2>&1
