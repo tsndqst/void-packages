@@ -1,6 +1,6 @@
 # Template file for 'kubernetes'
 pkgname=kubernetes
-version=1.37.0
+version=1.37.1
 revision=1
 archs="aarch64* x86_64* ppc64le*"
 build_style=go
@@ -12,7 +12,7 @@ maintainer="Orphaned <orphan@voidlinux.org>"
 license="Apache-2.0"
 homepage="http://kubernetes.io"
 distfiles="https://$go_import_path/archive/v$version.tar.gz"
-checksum=956ddae3b12acc08a715aea0411a168a36d5989b3e7185deeb6bf46b7dac19cf
+checksum=89295ac375eb0fdfe68a0696d81be615771d6b27c7ad9bb675dc6ffd0d2ce5f3
 nocross=yes
 system_accounts="kube"
 make_dirs="/var/lib/kubelet 0755 kube kube"
@@ -55,8 +55,17 @@ kubectl_package() {
 	short_desc="Controls the Kubernetes cluster manager"
 	pkg_install() {
 		vmove usr/bin/kubectl
+		vmove usr/bin/kubectl-convert
 		vmove usr/share/man/man1/kubectl*
 		vcompletion completion.bash bash
 		vcompletion completion.zsh zsh
+	}
+}
+
+kubeadm_package() {
+	short_desc="Tool built for creating Kubernetes clusters"
+	pkg_install() {
+		vmove usr/bin/kubeadm
+		vmove usr/share/man/man1/kubeadm*
 	}
 }
