@@ -17,6 +17,7 @@ nocross=yes
 system_accounts="kube"
 make_dirs="/var/lib/kubelet 0755 kube kube"
 conf_files="/etc/kubernetes/*"
+LDFLAGS="-fuse-ld=bfd"
 
 do_build() {
 	export GOLDFLAGS=""
@@ -55,8 +56,17 @@ kubectl_package() {
 	short_desc="Controls the Kubernetes cluster manager"
 	pkg_install() {
 		vmove usr/bin/kubectl
+		vmove usr/bin/kubectl-convert
 		vmove usr/share/man/man1/kubectl*
 		vcompletion completion.bash bash
 		vcompletion completion.zsh zsh
+	}
+}
+
+kubeadm_package() {
+	short_desc="Tool built for creating Kubernetes clusters"
+	pkg_install() {
+		vmove usr/bin/kubeadm
+		vmove usr/share/man/man1/kubeadm*
 	}
 }

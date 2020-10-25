@@ -1,5 +1,9 @@
 #!/bin/sh
-exec 2>&1
-[ -r /etc/kubernetes/config ] && . /etc/kubernetes/config
-[ -r /etc/kubernetes/kubelet ] && . /etc/kubernetes/kubelet
-exec kubelet $OPTS 2>/dev/null
+
+KUBELET_KUBECONFIG_ARGS="--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+KUBELET_CONFIG_ARGS="--config=/var/lib/kubelet/config.yaml"
+
+[ -r /var/lib/kubelet/kubeadm-flags.env ] && . /var/lib/kubelet/kubeadm-flags.env
+[ -r /etc/default/kubelet ] && . /etc/default/kubelet
+
+exec kube-log-runner -log-file=/var/log/kubelet.log kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_KUBEADM_ARGS $KUBELET_EXTRA_ARGS
