@@ -1,0 +1,14 @@
+# Template file for 'popeye'
+pkgname=popeye
+version=0.9.7
+revision=1
+_commit="4f12a172495e2acb7a621b29cffa924f1cd72580"
+build_style=go
+go_import_path="github.com/derailed/popeye"
+go_ldflags="-w -X ${go_import_path}/cmd.version=v${version} -X ${go_import_path}/cmd.commit=${_commit} -X ${go_import_path}/cmd.date=$(date -I)"
+short_desc="Kubernetes cluster resource sanitizer"
+maintainer="Tim Sandquist <tim.sandquist@gmail.com>"
+license="Apache-2.0"
+homepage="https://popeyecli.io/"
+distfiles="https://${go_import_path}/archive/v$version.tar.gz"
+checksum=77bfc5a6f07db96ac096e89ebd27da2ed7d7e62c4d9e02b1cda87a427c068ce6
