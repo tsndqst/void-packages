@@ -1,0 +1,2 @@
+site=https://ftp.gnu.org/gnu/gcc/
+pattern='gcc-\K[\d.]+'
