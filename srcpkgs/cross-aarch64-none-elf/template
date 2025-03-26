@@ -1,0 +1,12 @@
+# Template file for 'cross-aarch64-none-elf'
+_triplet=aarch64-none-elf
+pkgname=cross-aarch64-none-elf
+version=0.5
+revision=2
+metapackage=yes
+depends="cross-aarch64-none-elf-binutils cross-aarch64-none-elf-gcc
+ cross-aarch64-none-elf-libstdc++ cross-aarch64-none-elf-newlib"
+short_desc="GNU cross bare metal toolchain"
+maintainer="Tim Sandquist <tim.sandquist@gmail.com>"
+license="Public Domain"
+homepage="https://www.voidlinux.org/"
