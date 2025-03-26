@@ -1,0 +1,57 @@
+diff --git a/Makefile b/Makefile
+index 64bccbc..690ab85 100644
+--- a/Makefile
++++ b/Makefile
+@@ -194,7 +194,6 @@ else
+ endif #(AARCH32_INSTRUCTION_SET)
+ 
+ TF_CFLAGS_aarch32	+=	-mno-unaligned-access
+-TF_CFLAGS_aarch64	+=	-mgeneral-regs-only -mstrict-align
+ 
+ ##############################################################################
+ # WARNINGS Configuration
+@@ -413,8 +412,7 @@ INCLUDES		+=	-Iinclude				\
+ 				${SPD_INCLUDES}
+ 
+ DTC_FLAGS		+=	-I dts -O dtb
+-DTC_CPPFLAGS		+=	-P -nostdinc $(INCLUDES) -Ifdts -undef \
+-				-x assembler-with-cpp $(DEFINES)
++DTC_CPPFLAGS		+=	-P -nostdinc $(INCLUDES) -Ifdts -undef
+ 
+ include common/backtrace/backtrace.mk
+ 
+diff --git a/make_helpers/build_macros.mk b/make_helpers/build_macros.mk
+index f523074..93a3365 100644
+--- a/make_helpers/build_macros.mk
++++ b/make_helpers/build_macros.mk
+@@ -307,7 +307,7 @@ $(eval DEP := $(patsubst %.o,%.d,$(OBJ)))
+ 
+ $(OBJ): $(2) $(filter-out %.d,$(MAKEFILE_LIST)) | $$$$(@D)/
+ 	$$(s)echo "  AS      $$<"
+-	$$(q)$($(ARCH)-as) -x assembler-with-cpp $$(TF_CFLAGS_$(ARCH)) $$(ASFLAGS) $(MAKE_DEP) -c $$< -o $$@
++	$$(q)$($(ARCH)-as) $$(TF_CFLAGS_$(ARCH)) $$(ASFLAGS) $(MAKE_DEP) -c $$< -o $$@
+ 
+ -include $(DEP)
+ 
+@@ -353,7 +353,7 @@ $(eval BL_ASFLAGS := $($(call uppercase,$(3))_ASFLAGS) $(PLAT_BL_COMMON_ASFLAGS)
+ 
+ $(OBJ): $(2) $(filter-out %.d,$(MAKEFILE_LIST)) | $$$$(@D)/
+ 	$$(s)echo "  AS      $$<"
+-	$$(q)$($(ARCH)-as) -x assembler-with-cpp $$(TF_CFLAGS_$(ARCH)) $$(ASFLAGS) $(BL_CPPFLAGS) $(BL_ASFLAGS) $(MAKE_DEP) -c $$< -o $$@
++	$$(q)$($(ARCH)-as) $$(TF_CFLAGS_$(ARCH)) $$(ASFLAGS) $(BL_CPPFLAGS) $(BL_ASFLAGS) $(MAKE_DEP) -c $$< -o $$@
+ 
+ -include $(DEP)
+ 
+diff --git a/plat/st/common/common_rules.mk b/plat/st/common/common_rules.mk
+index fba7783..4801ab8 100644
+--- a/plat/st/common/common_rules.mk
++++ b/plat/st/common/common_rules.mk
+@@ -49,7 +49,7 @@ ${BUILD_PLAT}/fdts/%-bl2.dtb: ${BUILD_PLAT}/fdts/%-bl2.dts
+ 
+ ${BUILD_PLAT}/$(PLAT)-%.o: ${BUILD_PLAT}/fdts/%-bl2.dtb $(STM32_BINARY_MAPPING) bl2
+ 	$(s)echo "  AS      $${PLAT}.S"
+-	$(q)$($(ARCH)-as) -x assembler-with-cpp $(TF_CFLAGS_$(ARCH)) ${ASFLAGS} ${TF_CFLAGS} \
++	$(q)$($(ARCH)-as) $(TF_CFLAGS_$(ARCH)) ${ASFLAGS} ${TF_CFLAGS} \
+ 		-DDTB_BIN_PATH=\"$<\" \
+ 		-c $(word 2,$^) -o $@
+ 

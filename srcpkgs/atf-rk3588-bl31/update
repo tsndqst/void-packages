@@ -1,0 +1,2 @@
+site=https://git.trustedfirmware.org/plugins/gitiles/TF-A/trusted-firmware-a.git/+refs?format=TEXT
+pattern="tags/lts-v\K[\d\.]+"

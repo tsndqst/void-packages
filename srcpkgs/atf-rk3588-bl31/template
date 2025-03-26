@@ -1,0 +1,31 @@
+# Template file for 'atf-rk3588-bl31'
+pkgname=atf-rk3588-bl31
+version=2.14.5
+revision=2
+archs="aarch64*"
+build_helper=qemu
+hostmakedepends="cross-aarch64-none-elf"
+short_desc="ARM Trusted Firmware for Rockchip rk3588 boards (ARMv8, bl31 option)"
+maintainer="Tim Sandquist <tim.sandquist@gmail.com>"
+license="BSD-3-Clause"
+homepage="https://developer.trustedfirmware.org/dashboard/view/6/"
+#distfiles="https://gitlab.collabora.com/hardware-enablement/rockchip-3588/trusted-firmware-a/-/archive/rk3588/trusted-firmware-a-rk3588.tar.gz"
+distfiles=https://git.trustedfirmware.org/plugins/gitiles/TF-A/trusted-firmware-a.git/+archive/refs/tags/lts-v${version}.tar.gz
+#distfiles="https://github.com/ARM-software/arm-trusted-firmware/archive/refs/tags/v${version}.tar.gz"
+checksum=ba0c1fe7bacfc2462ce61a10e2da4133ba7abdc478357ac2a00722822a099cb1
+nostrip=yes
+
+do_build() {
+	unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+	if [ "$CROSS_BUILD" ]; then
+		export CROSS_COMPILE=${XBPS_CROSS_TRIPLET}-
+		export ARCH=${XBPS_TARGET_MACHINE}
+		export AS=${XBPS_CROSS_TRIPLET}-gcc
+	fi
+	make -d ${makejobs} PLAT=rk3588 bl31
+}
+
+do_install() {
+	vinstall build/rk3588/release/bl31/bl31.elf 0755 usr/lib/trusted-firmware-a/rk3588
+	vlicense docs/license.rst
+}
