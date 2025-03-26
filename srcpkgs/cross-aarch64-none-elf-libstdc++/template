@@ -1,0 +1,84 @@
+# Template file for 'cross-${_triplet}-libstdc++'
+_triplet=aarch64-none-elf
+pkgname=cross-${_triplet}-libstdc++
+version=14.2.0
+revision=2
+# gnu-configure implicitly passes stuff we don't want
+build_style=configure
+configure_args="
+ --disable-libstdcxx-pch --disable-libstdcxx-threads --disable-gcov
+ --disable-nls --disable-shared --disable-tls --disable-werror
+ --enable-multilib --host=${_triplet} --target=${_triplet}
+ --libdir=/usr/${_triplet}/lib --prefix=/usr/${_triplet}
+ --with-gnu-ld --with-gxx-include-dir=/usr/${_triplet}/include/c++/${version}
+ --with-newlib --with-python-dir=share/gcc-${_triplet}"
+make_build_args="INHIBIT_LIBC_CFLAGS='-DUSE_TM_CLONE_REGISTRY=0'"
+hostmakedepends="autoconf automake cross-aarch64-none-elf-binutils
+ cross-aarch64-none-elf-gcc cross-aarch64-none-elf-newlib bison flex perl"
+makedepends="gmp-devel isl15-devel libmpc-devel mpfr-devel zlib-devel"
+depends="cross-aarch64-none-elf-gcc"
+short_desc="GNU Compiler Collection - Standard C++ Library"
+maintainer="Tim Sandquist <tim.sandquist@gmail.com>"
+license="GPL-3.0-or-later"
+homepage="https://gcc.gnu.org"
+distfiles="${GNU_SITE}/gcc/gcc-${version}/gcc-${version}.tar.xz"
+checksum=a7b39bc69cbf9e25826c5a60ab26477001f7c08d85cec04bc0e29cabed6f3cc9
+nocross=yes
+nopie=yes
+nostrip=yes
+
+post_extract() {
+	mkdir -p build-{regular,nano}
+}
+
+do_configure() {
+	export CC=aarch64-none-elf-gcc
+	export CXX=aarch64-none-elf-g++
+	export CPP=aarch64-none-elf-cpp
+	export AR=aarch64-none-elf-ar
+	export AS=aarch64-none-elf-as
+
+	pushd build-regular
+	export CFLAGS="-g -O2 -ffunction-sections -fdata-sections -specs=rdimon.specs"
+	export CXXFLAGS="-g -O2 -ffunction-sections -fdata-sections -specs=rdimon.specs"
+	../libstdc++-v3/configure ${configure_args}
+	popd
+
+	pushd build-nano
+	export CFLAGS="-g -Os -ffunction-sections -fdata-sections -fno-exceptions -specs=rdimon.specs"
+	export CXXFLAGS="-g -Os -ffunction-sections -fdata-sections -fno-exceptions -specs=rdimon.specs"
+	../libstdc++-v3/configure ${configure_args}
+	popd
+}
+
+do_build() {
+	unset CC CXX CPP AR AS CFLAGS CXXFLAGS
+
+	pushd build-regular
+	make ${makejobs} ${make_build_args}
+	popd
+
+	pushd build-nano
+	make ${makejobs} ${make_build_args}
+	popd
+}
+
+do_install() {
+	pushd build-regular
+	make DESTDIR=${DESTDIR} install
+	popd
+
+	pushd build-nano
+	mkdir -p dest-nano
+	make DESTDIR=$(pwd)/dest-nano install
+	# only install the static libs for nano, no headers
+	local multilibs=( $(${_triplet}-gcc -print-multi-lib 2>/dev/null) )
+	for multilib in "${multilibs[@]}"; do
+		local dir="${multilib%%;*}"
+		local from_dir=dest-nano/usr/${_triplet}/lib/${dir}
+		local to_dir=${DESTDIR}/usr/${_triplet}/lib/${dir}
+		cp -f ${from_dir}/libstdc++.a ${to_dir}/libstdc++_nano.a
+		cp -f ${from_dir}/libsupc++.a ${to_dir}/libsupc++_nano.a
+	done
+	popd
+}
