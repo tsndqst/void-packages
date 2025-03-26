@@ -1,0 +1,73 @@
+# Template file for 'cross-${_triplet}-${_pkgname}'
+_triplet=aarch64-none-elf
+_pkgname=newlib
+pkgname=cross-${_triplet}-${_pkgname}
+version=4.6.0.20260123
+revision=3
+build_style=gnu-configure
+configure_args="
+ --prefix=/usr --target=${_triplet} --host=${XBPS_CROSS_TRIPLET}
+ --with-gnu-as --with-gnu-ld --disable-nls
+ --disable-newlib-supplied-syscalls --enable-newlib-retargetable-locking
+ --enable-interwork"
+hostmakedepends="cross-aarch64-none-elf-binutils cross-aarch64-none-elf-gcc"
+short_desc="C library intended for use on embedded systems"
+maintainer="Tim Sandquist <tim.sandquist@gmail.com>"
+license="GPL-2.0-or-later, LGPL-2.1-or-later"
+homepage="https://www.sourceware.org/newlib/"
+distfiles="ftp://sourceware.org/pub/newlib/newlib-${version}.tar.gz"
+checksum=6ff27e3bf022666f43f7802255be680eeff722ac181b1725d21e2e8318604ee3
+nostrip=yes
+nocross=yes
+
+post_extract() {
+	mkdir -p build-{newlib,nano}
+}
+
+do_configure() {
+	pushd build-newlib
+	export CFLAGS_FOR_TARGET="-g -O2 -ffunction-sections -fdata-sections"
+	../configure ${configure_args} \
+		--enable-newlib-io-long-long \
+		--enable-newlib-register-fini
+	popd
+
+	pushd build-nano
+	export CFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections"
+	../configure ${configure_args} \
+		--enable-newlib-reent-small \
+		--disable-newlib-fvwrite-in-streamio \
+		--disable-newlib-fseek-optimization \
+		--disable-newlib-wide-orient \
+		--enable-newlib-nano-malloc \
+		--disable-newlib-unbuf-stream-opt \
+		--enable-lite-exit \
+		--enable-newlib-global-atexit \
+		--enable-newlib-nano-formatted-io
+	popd
+}
+
+do_build() {
+	pushd build-newlib
+	make ${makejobs} MAKEINFO=true
+	popd
+
+	pushd build-nano
+	make ${makejobs} MAKEINFO=true
+	popd
+}
+
+do_install() {
+	pushd build-nano
+	make DESTDIR=${DESTDIR} install MAKEINFO=true
+	find ${DESTDIR} -regex ".*/lib\(c\|g\|rdimon\)\.a" \
+		-exec rename .a _nano.a '{}' \;
+	install -d ${DESTDIR}/usr/${_triplet}/include/newlib-nano
+	install -m644 -t ${DESTDIR}/usr/${_triplet}/include/newlib-nano \
+		${DESTDIR}/usr/${_triplet}/include/newlib.h
+	popd
+
+	pushd build-newlib
+	make DESTDIR=${DESTDIR} install MAKEINFO=true
+	popd
+}
