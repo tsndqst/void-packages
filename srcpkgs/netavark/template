@@ -4,6 +4,7 @@ version=2.1.0
 revision=1
 build_style=cargo
 hostmakedepends="mandown protobuf"
+make_dirs="/var/lib/netavark/dhcp-proxy 0755 root root"
 short_desc="Container network stack"
 maintainer="Daniel Eyßer <daniel.eysser@gmail.com>"
 license="Apache-2.0"
@@ -20,6 +21,7 @@ post_install() {
 	rm ${DESTDIR}/usr/bin/netavark-connection-tester
 	vmkdir usr/libexec/podman
 	ln -sf ../../bin/netavark "${DESTDIR}/usr/libexec/podman"
+	vsv netavark-dhcp-proxy
 	mandown docs/netavark.1.md > netavark.1
 	vman netavark.1
 }
