@@ -30,6 +30,21 @@ add_kernel() {
 	elif [ -n "${DTBPATH}" ] && [ -e "${BOOTPART}/${fdt}" ]; then
 		printf "\tFDT %s\n" "${fdt}" >> "${OUTFILE}"
 	fi
+	if [ -n "${FDTOVERLAYS}" ]; then
+		fdtoverlays=""
+		for overlay in ${FDTOVERLAYS}; do
+			case "${overlay}" in
+				/*) overlay=$(get_bootpath "/boot${overlay}") ;;
+				*)  overlay=$(get_bootpath "/boot/dtbs/dtbs-${ver}/${overlay}") ;;
+			esac
+			if [ -e "${BOOTPART}/${overlay}" ]; then
+				fdtoverlays="${fdtoverlays}${fdtoverlays:+ }${overlay}"
+			fi
+		done
+		if [ -n "${fdtoverlays}" ]; then
+			printf "\tFDTOVERLAYS %s\n" "${fdtoverlays}" >> "${OUTFILE}"
+		fi
+	fi
 	if [ -n "${cmdline}" ]; then
 		printf "\tAPPEND %s\n" "${cmdline}" >> "${OUTFILE}"
 	fi
