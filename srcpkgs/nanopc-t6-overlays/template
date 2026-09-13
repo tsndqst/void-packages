@@ -1,0 +1,69 @@
+# Template file for 'nanopc-t6-overlays'
+pkgname=nanopc-t6-overlays
+version=6.18.55
+revision=1
+# revision of the linux6.18 package whose dtbs-<ver> directory we install into
+_kernrev=1
+_kernver="${version}_${_kernrev}"
+archs="aarch64*"
+hostmakedepends="dtc xz"
+depends="linux6.18-${_kernver}"
+short_desc="Device tree overlays for the FriendlyELEC NanoPC-T6 LTS"
+maintainer="Tim Sandquist <tim.sandquist@gmail.com>"
+license="GPL-2.0-or-later OR MIT"
+homepage="https://wiki.friendlyelec.com/wiki/index.php/NanoPC-T6"
+distfiles="${KERNEL_SITE}/kernel/v${version%%.*}.x/linux-${version%.*}.tar.xz
+ ${KERNEL_SITE}/kernel/v${version%%.*}.x/patch-${version}.xz"
+checksum="9106a4605da9e31ff17659d958782b815f9591ab308d03b0ee21aad6c7dced4b
+ 2be25aa0e087029148f6f45889a4e474f4d18f6717f59cd5819a81909399f24f"
+skip_extraction="patch-${version}.xz"
+# like linux6.18: keep older kernels' DTBs until vkpurge removes dtbs-<ver>
+preserve=yes
+
+_dtb=rk3588-nanopc-t6-lts
+
+post_extract() {
+	xzcat $XBPS_SRCDISTDIR/$pkgname-$version/patch-${version}.xz |
+		patch -sNp1 -F0
+}
+
+do_build() {
+	local dts=arch/arm64/boot/dts/rockchip/${_dtb}.dts
+	local inc=scripts/dtc/include-prefixes
+	local f
+
+	# Build only this board's DTB, with __symbols__ (dtc -@) so label-based
+	# overlays can be applied to it. Mirrors kbuild's cmd_dtc.
+	cpp -nostdinc -I ${inc} -undef -D__DTS__ -x assembler-with-cpp \
+		-o ${_dtb}.dts.tmp ${dts}
+	dtc -@ -q -I dts -O dtb -b 0 -i ${dts%/*} -i ${inc} \
+		-o ${_dtb}.dtb ${_dtb}.dts.tmp
+
+	mkdir -p overlays
+	for f in ${FILESDIR}/*.dtso; do
+		f=${f##*/}
+		dtc -@ -I dts -O dtb -o overlays/${f%.dtso}.dtbo ${FILESDIR}/${f}
+	done
+
+	# Gate: every overlay must apply to the DTB built above, alone and all
+	# together. Done here rather than in do_check, which only runs with -Q.
+	for f in overlays/*.dtbo; do
+		sh ${FILESDIR}/validate-overlay.sh ${_dtb}.dtb ${f} ||
+			msg_error "$pkgver: ${f##*/} does not apply to ${_dtb}.dtb\n"
+	done
+	sh ${FILESDIR}/validate-overlay.sh ${_dtb}.dtb overlays/*.dtbo ||
+		msg_error "$pkgver: overlays do not apply together to ${_dtb}.dtb\n"
+}
+
+do_install() {
+	local dest=boot/dtbs/dtbs-${_kernver}/rockchip
+	local f
+
+	# renamed: linux6.18 already owns ${_dtb}.dtb (built without symbols)
+	vinstall ${_dtb}.dtb 644 ${dest} ${_dtb}-symbols.dtb
+	for f in overlays/*.dtbo; do
+		vinstall ${f} 644 ${dest}/overlays
+	done
+	vdoc ${FILESDIR}/README.voidlinux
+	vlicense LICENSES/preferred/MIT
+}

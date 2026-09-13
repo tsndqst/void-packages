@@ -1,0 +1,10 @@
+/dts-v1/;
+/plugin/;
+
+/* Enable uart0 on the 40-pin header. The header uses pin group m0
+ * (GPIO0_C5/C4, header pins 8/10) instead of the SoC default m1, so the
+ * routing is overridden here too. */
+&uart0 {
+	pinctrl-0 = <&uart0m0_xfer>;
+	status = "okay";
+};

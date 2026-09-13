@@ -1,0 +1,7 @@
+/dts-v1/;
+/plugin/;
+
+/* Enable uart6 on the 40-pin header. The SoC default pin group
+ * (uart6m1_xfer, GPIO1_A1/A0, header pins 28/27) is the one the header
+ * uses, so no pinmux overlay is needed. */
+&uart6 { status = "okay"; };

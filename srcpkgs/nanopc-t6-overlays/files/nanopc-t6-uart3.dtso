@@ -1,0 +1,7 @@
+/dts-v1/;
+/plugin/;
+
+/* Enable uart3 on the 40-pin header. The SoC default pin group
+ * (uart3m1_xfer, GPIO3_B6/B5, header pins 29/31) is the one the header
+ * uses, so no pinmux overlay is needed. */
+&uart3 { status = "okay"; };

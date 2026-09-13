@@ -1,0 +1,62 @@
+NanoPC-T6 LTS device tree overlays
+==================================
+
+This package builds rk3588-nanopc-t6-lts.dtb from the linux6.18 kernel source
+with __symbols__ (dtc -@), plus a set of overlays, and fails the build if any
+overlay does not apply to that DTB. Everything is installed into the kernel's
+versioned dtbs directory:
+
+  /boot/dtbs/dtbs-<kernver>/rockchip/rk3588-nanopc-t6-lts-symbols.dtb
+  /boot/dtbs/dtbs-<kernver>/rockchip/overlays/nanopc-t6-*.dtbo
+
+The rk3588-nanopc-t6-lts.dtb shipped by linux6.18 has no __symbols__, so
+U-Boot cannot apply overlays to it. Boot the -symbols DTB instead.
+
+Requirements
+------------
+- U-Boot booting via extlinux, with CONFIG_OF_LIBFDT_OVERLAY (implied by
+  ROCKCHIP_RK3588 in mainline U-Boot).
+- u-boot-menu with FDTOVERLAYS support.
+- The exact linux6.18 version this package was built for. When linux6.18 is
+  updated, bump version, _kernrev and checksum in the template and rebuild;
+  xbps refuses the kernel update until this package matches.
+
+Enabling
+--------
+No overlays are enabled by default. In /etc/default/extlinux:
+
+  DTBPATH="rockchip/rk3588-nanopc-t6-lts-symbols.dtb"
+  FDTOVERLAYS="rockchip/overlays/nanopc-t6-eth-aliases.dtbo rockchip/overlays/nanopc-t6-uart4.dtbo"
+
+Both are relative to the kernel's dtbs-<kernver> directory. Then regenerate
+/boot/extlinux/extlinux.conf:
+
+  # xbps-reconfigure -f linux6.18
+
+Overlays
+--------
+nanopc-t6-eth-aliases.dtbo
+  Describes the two onboard RTL8125 2.5G controllers and aliases them to
+  ethernet0/ethernet1, so U-Boot writes the eFuse-derived MAC addresses into
+  the DT before Linux probes (stable MACs, no udev rule needed).
+
+nanopc-t6-uartN.dtbo (N = 0, 3, 4, 6, 7, 8)
+  Enables uartN on the 40-pin header. Each overlay works on its own. The
+  header routes uart0, uart4 and uart7 to a different pin group than the SoC
+  default (m1), so those overlays also override pinctrl-0.
+
+  UART   Header TX/RX   GPIO          Pin group
+  uart0   8 / 10        GPIO0_C5/C4   uart0m0_xfer  (overrides SoC default)
+  uart3  29 / 31        GPIO3_B6/B5   uart3m1_xfer
+  uart4  23 / 19        GPIO1_B3/B2   uart4m2_xfer  (overrides SoC default)
+  uart6  28 / 27        GPIO1_A1/A0   uart6m1_xfer
+  uart7  22 / 24        GPIO1_B5/B4   uart7m2_xfer  (overrides SoC default)
+  uart8  40 / 36        GPIO3_A2/A3   uart8m1_xfer
+
+  uart2 is the debug console on its own header and is already enabled.
+
+Pin contention
+--------------
+Header pins are shared between functions, and whichever overlay claims a pin
+last wins. uart4 and uart7 overlap SPI0; uart3 overlaps I2S2 and PWM. Do not
+enable conflicting functions together.

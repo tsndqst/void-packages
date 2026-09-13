@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * NanoPC-T6 (RK3588) — describe the two onboard RTL8125 2.5G controllers and
+ * alias them to ethernet0/ethernet1 so U-Boot's fdt_fixup_ethernet() writes the
+ * eFuse-derived MAC into each node before Linux probes.
+ *
+ * Mapping (verified vs rk3588-base/extra.dtsi + board schematic):
+ *   ethernet0 -> &pcie2x1l2 == /pcie@fe190000  (domain 4, bus 0x40-0x4f) LAN A / U10
+ *   ethernet1 -> &pcie2x1l0 == /pcie@fe170000  (domain 2, bus 0x20-0x2f) LAN B / U12
+ *
+ * IMPORTANT: the aliases use the *explicit final path* of each ethernet node,
+ * NOT a label reference (&label). A label reference to a node defined inside an
+ * overlay compiles to the fragment path (/fragment@N/__overlay__/...), which
+ * does not exist in the merged tree — U-Boot's MAC fixup then fails with
+ * FDT_ERR_NOTFOUND. The path below matches where the node is attached under
+ * &pcie2x1l0 / &pcie2x1l2 (root-level pcie@fe1x0000 nodes on mainline RK3588).
+ *
+ * Requires a base DTB built with symbols (dtc -@) and U-Boot with
+ * CONFIG_OF_LIBFDT_OVERLAY.
+ */
+
+/dts-v1/;
+/plugin/;
+
+&{/aliases} {
+	ethernet0 = "/pcie@fe190000/pcie@0,0/ethernet@0,0";
+	ethernet1 = "/pcie@fe170000/pcie@0,0/ethernet@0,0";
+};
+
+/* LAN B (U12) - pcie2x1l0, domain 2, secondary bus 0x21 */
+&pcie2x1l0 {
+	#address-cells = <3>;
+	#size-cells = <2>;
+
+	pcie@0,0 {
+		reg = <0x00200000 0 0 0 0>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges;
+		device_type = "pci";
+		bus-range = <0x21 0x2f>;
+
+		ethernet@0,0 {
+			reg = <0x00210000 0 0 0 0>;
+			compatible = "pci10ec,8125";
+			device_type = "network";
+			mac-address = [ 00 00 00 00 00 00 ]; /* patched by U-Boot */
+		};
+	};
+};
+
+/* LAN A (U10) - pcie2x1l2, domain 4, secondary bus 0x41 */
+&pcie2x1l2 {
+	#address-cells = <3>;
+	#size-cells = <2>;
+
+	pcie@0,0 {
+		reg = <0x00400000 0 0 0 0>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges;
+		device_type = "pci";
+		bus-range = <0x41 0x4f>;
+
+		ethernet@0,0 {
+			reg = <0x00410000 0 0 0 0>;
+			compatible = "pci10ec,8125";
+			device_type = "network";
+			mac-address = [ 00 00 00 00 00 00 ]; /* patched by U-Boot */
+		};
+	};
+};

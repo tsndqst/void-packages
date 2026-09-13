@@ -1,0 +1,7 @@
+/dts-v1/;
+/plugin/;
+
+/* Enable uart8 on the 40-pin header. The SoC default pin group
+ * (uart8m1_xfer, GPIO3_A2/A3, header pins 40/36) is the one the header
+ * uses, so no pinmux overlay is needed. */
+&uart8 { status = "okay"; };

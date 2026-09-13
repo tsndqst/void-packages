@@ -1,0 +1,10 @@
+/dts-v1/;
+/plugin/;
+
+/* Enable uart7 on the 40-pin header. The header uses pin group m2
+ * (GPIO1_B5/B4, header pins 22/24) instead of the SoC default m1, so the
+ * routing is overridden here too. */
+&uart7 {
+	pinctrl-0 = <&uart7m2_xfer>;
+	status = "okay";
+};
